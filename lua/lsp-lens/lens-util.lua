@@ -34,6 +34,7 @@ local SymbolKind = {
     Class = 5,
     Methods = 6,
     Interface = 11,
+    Constant = 14,
     Function = 12,
     Struct = 23,
 }
@@ -41,7 +42,11 @@ local SymbolKind = {
 local function get_functions(result)
     local ret = {}
     for _, v in pairs(result or {}) do
-        if v.kind == SymbolKind.Function or v.kind == SymbolKind.Methods or v.kind == SymbolKind.Interface then
+        if v.kind == SymbolKind.Function
+            or v.kind == SymbolKind.Methods
+            or v.kind == SymbolKind.Interface
+            or v.kind == SymbolKind.Constant
+        then
             if v.range and v.range.start then
                 table.insert(ret, {
                     name = v.name,
@@ -50,7 +55,7 @@ local function get_functions(result)
                     selectionRangeEnd = v.selectionRange["end"],
                 })
             end
-        elseif v.kind == SymbolKind.Class or v.kind == SymbolKind.Struct then
+        elseif v.kind == SymbolKind.Struct then
             ret = utils:merge_table(ret, get_functions(v.children)) -- Recursively find methods
         elseif v.kind == SymbolKind.Class then
             if v.range and v.range.start then
