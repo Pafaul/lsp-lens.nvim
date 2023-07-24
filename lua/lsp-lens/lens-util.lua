@@ -34,18 +34,19 @@ local SymbolKind = {
     Class = 5,
     Methods = 6,
     Interface = 11,
-    Constant = 14,
     Function = 12,
+    Constant = 14,
     Struct = 23,
 }
 
-local function get_functions(result)
+local function get_definitions(result)
     local ret = {}
     for _, v in pairs(result or {}) do
         if v.kind == SymbolKind.Function
             or v.kind == SymbolKind.Methods
             or v.kind == SymbolKind.Interface
             or v.kind == SymbolKind.Constant
+            or v.kind == SymbolKind.Struct
         then
             if v.range and v.range.start then
                 table.insert(ret, {
@@ -55,27 +56,18 @@ local function get_functions(result)
                     selectionRangeEnd = v.selectionRange["end"],
                 })
             end
-        elseif v.kind == SymbolKind.Struct then
-            ret = utils:merge_table(ret, get_functions(v.children)) -- Recursively find methods
-        elseif v.kind == SymbolKind.Class then
-            if v.range and v.range.start then
-                table.insert(ret, {
-                    name = v.name,
-                    rangeStart = v.range.start,
-                    selectionRangeStart = v.selectionRange.start,
-                    selectionRangeEnd = v.selectionRange["end"],
-                })
-            end
-            ret = utils:merge_table(ret, get_functions(v.children)) -- Recursively find methods
+        end
+        if v.kind == SymbolKind.Struct or v.kind == SymbolKind.Class then
+            ret = utils:merge_table(ret, get_definitions(v.children)) -- Recursively find methods
         end
     end
     return ret
 end
 
-local function get_cur_document_functions(results)
+local function get_cur_document_definitions(results)
     local ret = {}
     for _, res in pairs(results or {}) do
-        ret = utils:merge_table(ret, get_functions(res.result))
+        ret = utils:merge_table(ret, get_definitions(res.result))
     end
     return ret
 end
@@ -275,7 +267,7 @@ function lsplens:procedure()
             local symbols = {}
             symbols["bufnr"] = bufnr
             symbols["document_symbols"] = document_symbols
-            symbols["document_functions"] = get_cur_document_functions(symbols.document_symbols)
+            symbols["document_functions"] = get_cur_document_definitions(symbols.document_symbols)
             symbols["document_functions_with_params"] = make_params(symbols.document_functions)
             do_request(symbols)
         end)
