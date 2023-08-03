@@ -47,6 +47,7 @@ local function get_definitions(result)
             or v.kind == SymbolKind.Interface
             or v.kind == SymbolKind.Constant
             or v.kind == SymbolKind.Struct
+            or v.kind == SymbolKind.Class
         then
             if v.range and v.range.start then
                 table.insert(ret, {
